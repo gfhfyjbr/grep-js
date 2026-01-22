@@ -1,1 +1,1 @@
-export * from 'grep-js-wasm32-wasi'
+export * from '@gfhfyjbr/grep-js-wasm32-wasi'

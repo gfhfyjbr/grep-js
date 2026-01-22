@@ -39,9 +39,9 @@ if (__nodeFs.existsSync(__wasmDebugFilePath)) {
   __wasmFilePath = __wasmDebugFilePath
 } else if (!__nodeFs.existsSync(__wasmFilePath)) {
   try {
-    __wasmFilePath = require.resolve('grep-js-wasm32-wasi/grep-js.wasm32-wasi.wasm')
+    __wasmFilePath = require.resolve('@gfhfyjbr/grep-js-wasm32-wasi/grep-js.wasm32-wasi.wasm')
   } catch {
-    throw new Error('Cannot find grep-js.wasm32-wasi.wasm file, and grep-js-wasm32-wasi package is not installed.')
+    throw new Error('Cannot find grep-js.wasm32-wasi.wasm file, and @gfhfyjbr/grep-js-wasm32-wasi package is not installed.')
   }
 }
 
