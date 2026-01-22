@@ -1,8 +1,11 @@
-# grep-js
+# @gfhfyjbr/grep-js
 
-A Node.js binding for the [grep](https://docs.rs/grep/latest/grep/) crate - the same regex search library that powers [ripgrep](https://github.com/BurntSushi/ripgrep).
+[![CI](https://github.com/gfhfyjbr/grep-js/actions/workflows/CI.yml/badge.svg)](https://github.com/gfhfyjbr/grep-js/actions/workflows/CI.yml)
+[![npm version](https://badge.fury.io/js/@gfhfyjbr%2Fgrep-js.svg)](https://www.npmjs.com/package/@gfhfyjbr/grep-js)
 
-This library provides fast, line-oriented regex searching with support for:
+Node.js bindings for the [grep](https://docs.rs/grep/latest/grep/) crate - the same regex search library that powers [ripgrep](https://github.com/BurntSushi/ripgrep).
+
+Fast, line-oriented regex searching with support for:
 
 - Multi-line search
 - Context lines (before/after matches)
@@ -10,54 +13,59 @@ This library provides fast, line-oriented regex searching with support for:
 - Inverted matching
 - Smart case sensitivity
 - Word boundary matching
-- And more...
+
+## Supported Platforms
+
+| OS            | Architecture               |
+| ------------- | -------------------------- |
+| Windows       | x64, arm64                 |
+| macOS         | x64, arm64 (Apple Silicon) |
+| Linux (glibc) | x64, arm64                 |
+| Linux (musl)  | x64, arm64                 |
 
 ## Installation
 
 ```bash
-npm install grep-js
+npm install @gfhfyjbr/grep-js
 ```
 
-## Imports
+## Usage
 
-You can import everything from the main package or use subpackages for better tree-shaking:
+### ES Modules
 
 ```javascript
 // Import everything
-import { search, RegexMatcher, Searcher } from 'grep-js'
+import { search, RegexMatcher, Searcher } from '@gfhfyjbr/grep-js'
 
 // Or import specific modules
-import { RegexMatcher, RegexMatcherBuilder } from 'grep-js/matcher'
-import { Searcher, SearcherBuilder, BinaryDetectionMode } from 'grep-js/searcher'
+import { RegexMatcher, RegexMatcherBuilder } from '@gfhfyjbr/grep-js/matcher'
+import { Searcher, SearcherBuilder, BinaryDetectionMode } from '@gfhfyjbr/grep-js/searcher'
 ```
 
-CommonJS:
+### CommonJS
 
 ```javascript
-// Main package
-const { search, RegexMatcher } = require('grep-js')
+const { search, RegexMatcher } = require('@gfhfyjbr/grep-js')
 
-// Subpackages
-const { RegexMatcher, RegexMatcherBuilder } = require('grep-js/matcher')
-const { Searcher, SearcherBuilder } = require('grep-js/searcher')
+const { RegexMatcher, RegexMatcherBuilder } = require('@gfhfyjbr/grep-js/matcher')
+const { Searcher, SearcherBuilder } = require('@gfhfyjbr/grep-js/searcher')
 ```
 
 ## Quick Start
 
 ```javascript
-import { search, searchFile, isMatch, find, findAll } from 'grep-js'
+import { search, searchFile, isMatch, find, findAll } from '@gfhfyjbr/grep-js'
 
-// Simple search in a string
+// Search in a string
 const result = search('hello\\s+\\w+', 'hello world\nhello there\ngoodbye')
 console.log(result.matches)
 // [
-//   { lineNumber: 1, line: 'hello world\n', matches: [{ start: 0, end: 11 }], ... },
-//   { lineNumber: 2, line: 'hello there\n', matches: [{ start: 0, end: 11 }], ... }
+//   { lineNumber: 1, line: 'hello world\n', matches: [{ start: 0, end: 11 }] },
+//   { lineNumber: 2, line: 'hello there\n', matches: [{ start: 0, end: 11 }] }
 // ]
 
 // Search in a file
 const fileResult = searchFile('TODO|FIXME', './src/lib.rs')
-console.log(fileResult.matches)
 
 // Quick match check
 if (isMatch('error', logContent)) {
@@ -66,172 +74,113 @@ if (isMatch('error', logContent)) {
 
 // Find first match
 const match = find('\\d+', 'abc123def')
-console.log(match) // { start: 3, end: 6 }
+// { start: 3, end: 6 }
 
 // Find all matches
 const allMatches = findAll('\\d+', 'a1b2c3')
-console.log(allMatches) // [{ start: 1, end: 2 }, { start: 3, end: 4 }, { start: 5, end: 6 }]
+// [{ start: 1, end: 2 }, { start: 3, end: 4 }, { start: 5, end: 6 }]
 ```
 
 ## Advanced Usage
 
 ### RegexMatcherBuilder
 
-Configure regex matching behavior with the builder pattern:
-
 ```javascript
-import { RegexMatcherBuilder, Searcher } from 'grep-js'
+import { RegexMatcherBuilder, Searcher } from '@gfhfyjbr/grep-js'
 
-const builder = new RegexMatcherBuilder()
-  .caseInsensitive(true) // Case insensitive matching
-  .multiLine(true) // ^ and $ match line boundaries
-  .word(true) // Match whole words only
-  .unicode(true) // Enable Unicode support
-
-const matcher = builder.build('error')
+const matcher = new RegexMatcherBuilder().caseInsensitive(true).multiLine(true).word(true).build('error')
 
 const searcher = new Searcher()
-const result = searcher.searchSlice(matcher, 'ERROR: something failed\nWarning: error detected')
+const result = searcher.searchSlice(matcher, 'ERROR: failed\nWarning: error detected')
 ```
 
-#### RegexMatcherBuilder Options
+#### Options
 
-| Method                    | Description                                                |
-| ------------------------- | ---------------------------------------------------------- |
-| `caseInsensitive(bool)`   | Enable case-insensitive matching                           |
-| `caseSmart(bool)`         | Auto-enable case insensitivity if pattern has no uppercase |
-| `multiLine(bool)`         | `^` and `$` match line boundaries                          |
-| `dotMatchesNewLine(bool)` | `.` matches newlines                                       |
-| `swapGreed(bool)`         | Make `*` lazy and `*?` greedy                              |
-| `ignoreWhitespace(bool)`  | Ignore whitespace in pattern                               |
-| `unicode(bool)`           | Enable Unicode support (default: true)                     |
-| `octal(bool)`             | Enable octal escape sequences                              |
-| `word(bool)`              | Match only at word boundaries                              |
-| `fixedStrings(bool)`      | Treat pattern as literal string                            |
-| `wholeLine(bool)`         | Pattern must match entire line                             |
-| `crlf(bool)`              | Enable CRLF line endings                                   |
-| `lineTerminator(byte)`    | Set custom line terminator                                 |
-| `sizeLimit(bytes)`        | Set regex compilation size limit                           |
-| `dfaSizeLimit(bytes)`     | Set DFA cache size limit                                   |
-| `nestLimit(n)`            | Set pattern nesting limit                                  |
+| Method                    | Description                                     |
+| ------------------------- | ----------------------------------------------- |
+| `caseInsensitive(bool)`   | Case-insensitive matching                       |
+| `caseSmart(bool)`         | Auto case-insensitivity if pattern is lowercase |
+| `multiLine(bool)`         | `^` and `$` match line boundaries               |
+| `dotMatchesNewLine(bool)` | `.` matches newlines                            |
+| `word(bool)`              | Match only at word boundaries                   |
+| `fixedStrings(bool)`      | Treat pattern as literal string                 |
+| `wholeLine(bool)`         | Pattern must match entire line                  |
+| `unicode(bool)`           | Enable Unicode support                          |
 
 ### SearcherBuilder
 
-Configure search behavior:
-
 ```javascript
-import { RegexMatcher, SearcherBuilder, BinaryDetectionMode } from 'grep-js'
+import { RegexMatcher, SearcherBuilder, BinaryDetectionMode } from '@gfhfyjbr/grep-js'
 
 const matcher = RegexMatcher.fromPattern('function\\s+\\w+')
 
 const searcher = new SearcherBuilder()
-  .lineNumber(true) // Include line numbers
-  .beforeContext(2) // Show 2 lines before each match
-  .afterContext(2) // Show 2 lines after each match
-  .invertMatch(false) // Show matching lines (not non-matching)
-  .multiLine(false) // Single-line mode
-  .binaryDetection(BinaryDetectionMode.Quit) // Stop on binary files
-  .maxMatches(100) // Limit results
+  .lineNumber(true)
+  .beforeContext(2)
+  .afterContext(2)
+  .binaryDetection(BinaryDetectionMode.Quit)
+  .maxMatches(100)
   .build()
 
 const result = searcher.searchPath(matcher, './src/index.ts')
 
-// Process matches
 for (const match of result.matches) {
   console.log(`${match.lineNumber}: ${match.line}`)
 }
-
-// Process context lines
-for (const ctx of result.context) {
-  console.log(`  ${ctx.lineNumber}: ${ctx.line}`)
-}
 ```
 
-#### SearcherBuilder Options
+#### Options
 
-| Method                  | Description                                   |
-| ----------------------- | --------------------------------------------- |
-| `lineNumber(bool)`      | Include line numbers (default: true)          |
-| `lineTerminator(byte)`  | Set line terminator (default: `\n`)           |
-| `invertMatch(bool)`     | Report non-matching lines                     |
-| `multiLine(bool)`       | Enable multi-line matching                    |
-| `beforeContext(n)`      | Lines of context before match                 |
-| `afterContext(n)`       | Lines of context after match                  |
-| `passthru(bool)`        | Report all lines as context                   |
-| `heapLimit(bytes)`      | Set heap usage limit                          |
-| `binaryDetection(mode)` | Binary detection mode                         |
-| `bomSniffing(bool)`     | Auto-detect UTF-16 via BOM                    |
-| `stopOnNonmatch(bool)`  | Stop after first non-match (for sorted files) |
-| `maxMatches(n)`         | Maximum number of matches                     |
+| Method                  | Description                          |
+| ----------------------- | ------------------------------------ |
+| `lineNumber(bool)`      | Include line numbers (default: true) |
+| `invertMatch(bool)`     | Report non-matching lines            |
+| `multiLine(bool)`       | Enable multi-line matching           |
+| `beforeContext(n)`      | Lines of context before match        |
+| `afterContext(n)`       | Lines of context after match         |
+| `binaryDetection(mode)` | Binary detection mode                |
+| `maxMatches(n)`         | Maximum number of matches            |
 
-### Binary Detection Modes
+### Binary Detection
 
 ```javascript
-import { BinaryDetectionMode } from 'grep-js'
+import { BinaryDetectionMode } from '@gfhfyjbr/grep-js'
 
-// No binary detection - search everything
-BinaryDetectionMode.None
-
-// Stop searching when binary data is detected
-BinaryDetectionMode.Quit
-
-// Convert NUL bytes to line terminators
-BinaryDetectionMode.Convert
+BinaryDetectionMode.None // Search everything
+BinaryDetectionMode.Quit // Stop on binary data
+BinaryDetectionMode.Convert // Convert NUL bytes
 ```
 
-## Result Types
-
-### SearchResult
+## Types
 
 ```typescript
 interface SearchResult {
-  matches: SearchMatch[] // All matching lines
-  context: SearchContext[] // Context lines (before/after)
-  finish: SearchFinish // Summary information
+  matches: SearchMatch[]
+  context: SearchContext[]
+  finish: SearchFinish
 }
-```
 
-### SearchMatch
-
-```typescript
 interface SearchMatch {
-  lineNumber?: number // Line number (1-based)
-  absoluteByteOffset: number // Byte offset from start
-  line: string // Matched line content
-  bytes: Buffer // Raw bytes of matched line
-  matches: MatchRange[] // All match positions in line
+  lineNumber?: number
+  absoluteByteOffset: number
+  line: string
+  bytes: Buffer
+  matches: MatchRange[]
 }
-```
 
-### SearchContext
-
-```typescript
-interface SearchContext {
-  lineNumber?: number // Line number (1-based)
-  absoluteByteOffset: number // Byte offset from start
-  line: string // Context line content
-  bytes: Buffer // Raw bytes
-  kind: ContextKind // 'Before', 'After', or 'Other'
-}
-```
-
-### MatchRange
-
-```typescript
 interface MatchRange {
-  start: number // Start byte offset
-  end: number // End byte offset
+  start: number
+  end: number
 }
 ```
 
 ## Performance
 
-This library uses the same regex engine as ripgrep, providing:
+Uses the same regex engine as ripgrep:
 
-- Fast regex compilation
-- Efficient DFA-based matching
-- Memory-mapped file support
+- Fast DFA-based matching
 - Optimized literal string matching
+- Memory-mapped file support
 
 ## License
 
